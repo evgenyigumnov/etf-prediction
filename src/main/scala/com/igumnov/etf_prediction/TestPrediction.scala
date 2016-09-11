@@ -42,13 +42,13 @@ object TestPrediction {
     val data = spark.read.format("libsvm")
       .load("data/spy.txt")
     // Split the data into train and test
-    val splits = data.randomSplit(Array(0.6, 0.4), seed = 1234L)
+    val splits = data.randomSplit(Array(0.99,0.01), seed = 1234L)
     val train = splits(0)
-    val test = splits(1)
+    val test = splits(0)
     // specify layers for the neural network:
     // input layer of size 4 (features), two intermediate of size 5 and 4
     // and output of size 3 (classes)
-    val layers = Array[Int](14, 7, 3)
+    val layers = Array[Int](5, 10, 5, 3)
     // create the trainer and set its parameters
     val trainer = new MultilayerPerceptronClassifier()
       .setLayers(layers)

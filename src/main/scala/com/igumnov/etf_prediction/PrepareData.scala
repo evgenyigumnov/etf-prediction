@@ -32,34 +32,32 @@ object PrepareData {
     val rates17normal = rates17.map(normal(_))
 
     val rates14learn = rates17normal.map(set => {
-      val last4 = normal(set.takeRight(4))
+      val last4 = normal(set.takeRight(3))
       val teach = if (last4.head < last4.last) {
         if (last4.head < last4.apply(1) &&
-          last4.head < last4.apply(2) &&
-          last4.head < last4.apply(3)) 1
+          last4.apply(1) < last4.apply(2)) 1
         else 0
       } else {
         if (last4.head > last4.last) {
           if (last4.head > last4.apply(1) &&
-            last4.head > last4.apply(2) &&
-            last4.head > last4.apply(3)) 2
+            last4.apply(1) > last4.apply(2) ) 2
           else 0
         } else {
           0
         }
       }
       //      (set.take(14) :+ teach) ++ set.takeRight(3)
-      (set.take(14) :+ teach) ++ set.takeRight(3)
+      (set.take(5) :+ teach) ++ set.takeRight(2)
     })
 
 
     val lines = rates14learn.map(set => {
-      val a = set.take(14).map(":" + _)
-      val b = a.zip((1 to 14).toList)
+      val a = set.take(5).map(":" + _)
+      val b = a.zip((1 to 5).toList)
       val c = b.map(x=> {
          (x._2.toString)+x._1
       })
-      set(14) + " " + c.mkString(" ")
+      set(5) + " " + c.mkString(" ")
     }
     )
 
@@ -78,10 +76,10 @@ object PrepareData {
   }
 
   def tail17(lines: List[String]): List[List[String]] = {
-    if (lines.size > 14 + 3)
-      List(lines.take(14 + 3)) ++ tail17(lines.tail)
+    if (lines.size > 5 + 2)
+      List(lines.take(5 + 2)) ++ tail17(lines.tail)
     else
-      List(lines.take(14 + 3))
+      List(lines.take(5 + 2))
   }
 
 }
