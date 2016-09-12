@@ -46,18 +46,17 @@ object PrepareData {
           0
         }
       }
-      //      (set.take(14) :+ teach) ++ set.takeRight(3)
-      (set.take(5) :+ teach) ++ set.takeRight(2)
+      List(teach) ++ set.take(5)
     })
 
 
     val lines = rates14learn.map(set => {
-      val a = set.take(5).map(":" + _)
+      val a = set.takeRight(5).map(":" + _)
       val b = a.zip((1 to 5).toList)
       val c = b.map(x=> {
          (x._2.toString)+x._1
       })
-      set(5) + " " + c.mkString(" ")
+      set(0) + " " + c.mkString(" ")
     }
     )
 
