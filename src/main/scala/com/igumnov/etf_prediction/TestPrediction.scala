@@ -33,7 +33,7 @@ import org.apache.spark.sql.SparkSession
   */
 object TestPrediction {
 
-  val SIZE = 10
+  val SIZE = 4
 
   def main(args: Array[String]): Unit = {
 
@@ -42,17 +42,20 @@ object TestPrediction {
     val linesCsv = Source.fromFile("data/spy.csv").getLines()
     val linesCsvOrdered = linesCsv.toList.reverse
 
-    val rates14learn1 = prepareLearn(linesCsvOrdered.dropRight(50))
-    val rates14test1 = prepareLearn(linesCsvOrdered.takeRight(50))
+    val TRAIN = 100
+    val rates14learn1 = prepareLearn(linesCsvOrdered.dropRight(TRAIN))
+    val rates14test1 = prepareLearn(linesCsvOrdered.takeRight(TRAIN))
 
-    val lines = prepareLines(rates14learn1.dropRight(50))
-    val lines2 = prepareLines(rates14test1.takeRight(50))
+    val lines = prepareLines(rates14learn1)
+    val lines2 = prepareLines(rates14test1)
 
 
     Files.write(Paths.get("data/spy.txt"), lines.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
 
 
     Files.write(Paths.get("data/spy1.txt"), lines2.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
+
+    Files.write(Paths.get("data/spy2.txt"), tail17(linesCsvOrdered.takeRight(TRAIN)).flatMap(s => (s + "\n").getBytes("utf8")).toArray)
 
 
 
@@ -68,14 +71,14 @@ object TestPrediction {
     val dataTest = spark.read.format("libsvm")
       .load("data/spy1.txt")
     // Split the data into train and test
-//    val splitsTrain = dataTrain.randomSplit(Array(0.99, 0.01), seed = 1234L)
-//    val splitsTest = dataTest.randomSplit(Array(0.99, 0.01), seed = 1234L)
+    //    val splitsTrain = dataTrain.randomSplit(Array(0.99, 0.01), seed = 1234L)
+    //    val splitsTest = dataTest.randomSplit(Array(0.99, 0.01), seed = 1234L)
     val train = dataTrain
     val test = dataTest
     // specify layers for the neural network:
     // input layer of size 4 (features), two intermediate of size 5 and 4
     // and output of size 3 (classes)
-    val layers = Array[Int](SIZE, SIZE + 4, 3, 2)
+    val layers = Array[Int](SIZE-1, SIZE + 4, 3, 2)
     // create the trainer and set its parameters
     val trainer = new MultilayerPerceptronClassifier()
       .setLayers(layers)
@@ -92,7 +95,7 @@ object TestPrediction {
       resultStr += toStr(r.getAs("prediction"))
     }
     )
-    resultStr.reverse.zip(linesCsvOrdered.reverse.drop(2)).foreach(x=>{
+    resultStr.reverse.zip(linesCsvOrdered.reverse.drop(2)).foreach(x => {
       println(x._1 + " " + x._2)
     })
     val predictionAndLabels = result.filter(r => {
@@ -136,7 +139,8 @@ object TestPrediction {
 
   def prepareLines(rates14learn: List[List[AnyVal]]) = {
     rates14learn.map(set => {
-      val a = set.takeRight(SIZE).map(":" + _)
+      //println(set)
+      val a = set.tail.map(":" + _)
       val b = a.zip((1 to SIZE).toList)
       val c = b.map(x => {
         (x._2.toString) + x._1
@@ -145,7 +149,8 @@ object TestPrediction {
     }
     )
   }
-  def prepareLearn(linesCsvOrdered:List[String]) = {
+
+  def prepareLearn(linesCsvOrdered: List[String]) = {
     val lines17 = tail17(linesCsvOrdered)
     val rates17 = lines17.map(set =>
       set.map(line =>
