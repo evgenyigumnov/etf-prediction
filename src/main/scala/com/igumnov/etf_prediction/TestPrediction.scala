@@ -33,6 +33,8 @@ import org.apache.spark.sql.SparkSession
   */
 object TestPrediction {
 
+  val SIZE = 3
+
   def main(args: Array[String]): Unit = {
 
     import scala.io.Source
@@ -50,21 +52,21 @@ object TestPrediction {
     val rates14learn = rates17.map(set => {
       val last4 = normal(set).takeRight(2)
       val teach = if (last4.head < last4.last) {
-        if ((last4.last - last4.head) > 0.5) 1 else 0
+//        if ((last4.last - last4.head) > 0.5) 1 else 0
+        1
       }
       else 0
-      List(teach) ++ normal(set.take(5))
+      List(teach) ++ normal(set.take(SIZE))
     })
 
 
+//    val lines = prepareLines(rates14learn.dropRight(1000))
     val lines = prepareLines(rates14learn.dropRight(100))
 
     Files.write(Paths.get("data/spy.txt"), lines.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
 
     //    val lines2 = prepareLines(List(rates14learn.last))
-    val lines2 = prepareLines(rates14learn.takeRight(100).filter(x => {
-      x(0) == 1.0
-    }))
+    val lines2 = prepareLines(rates14learn.takeRight(100))
 
     Files.write(Paths.get("data/spy1.txt"), lines2.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
 
@@ -88,7 +90,7 @@ object TestPrediction {
     // specify layers for the neural network:
     // input layer of size 4 (features), two intermediate of size 5 and 4
     // and output of size 3 (classes)
-    val layers = Array[Int](5, 10, 5, 2)
+    val layers = Array[Int](SIZE, SIZE+2,3, 2)
     // create the trainer and set its parameters
     val trainer = new MultilayerPerceptronClassifier()
       .setLayers(layers)
@@ -128,16 +130,16 @@ object TestPrediction {
   }
 
   def tail17(lines: List[String]): List[List[String]] = {
-    if (lines.size > 5 + 1)
-      List(lines.take(5 + 1)) ++ tail17(lines.tail)
+    if (lines.size > SIZE + 1)
+      List(lines.take(SIZE + 1)) ++ tail17(lines.tail)
     else
-      List(lines.take(5 + 1))
+      List(lines.take(SIZE + 1))
   }
 
   def prepareLines(rates14learn: List[List[AnyVal]]) = {
     rates14learn.map(set => {
-      val a = set.takeRight(5).map(":" + _)
-      val b = a.zip((1 to 5).toList)
+      val a = set.takeRight(SIZE).map(":" + _)
+      val b = a.zip((1 to SIZE).toList)
       val c = b.map(x => {
         (x._2.toString) + x._1
       })
