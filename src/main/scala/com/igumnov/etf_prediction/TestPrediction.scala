@@ -41,26 +41,12 @@ object TestPrediction {
 
     val linesCsv = Source.fromFile("data/spy.csv").getLines()
     val linesCsvOrdered = linesCsv.toList.reverse
-    val lines17 = tail17(linesCsvOrdered)
-    val rates17 = lines17.map(set =>
-      set.map(line =>
-        (line.split(" ").apply(1)).toDouble
-      )
-    )
-    //    val rates17normal = rates17.map(normal(_))
 
-    val rates14learn = rates17.map(set => {
-      val last4 = normal(set).takeRight(2)
-      val teach = if ((last4(0) < last4(1))) 1 else 0
-      List(teach) ++ normal2(set.take(SIZE))
-    })
+    val rates14learn1 = prepareLearn(linesCsvOrdered.dropRight(50))
+    val rates14test1 = prepareLearn(linesCsvOrdered.takeRight(50))
 
-
-    //    val lines = prepareLines(rates14learn.dropRight(50).takeRight(200))
-    //    val lines2 = prepareLines(rates14learn.takeRight(50))
-
-    val lines = prepareLines(rates14learn.dropRight(50))
-    val lines2 = prepareLines(rates14learn.takeRight(50))
+    val lines = prepareLines(rates14learn1.dropRight(50))
+    val lines2 = prepareLines(rates14test1.takeRight(50))
 
 
     Files.write(Paths.get("data/spy.txt"), lines.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
@@ -68,7 +54,6 @@ object TestPrediction {
 
     Files.write(Paths.get("data/spy1.txt"), lines2.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
 
-    Files.write(Paths.get("data/spy2.txt"), lines17.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
 
 
     val spark = SparkSession
@@ -131,7 +116,7 @@ object TestPrediction {
     val min = set.min
     val middle = ((max - min) / 2.0) + min
     set.map(rate => {
-      (((((max - rate) / (max - min) * (-1)) + 1) * 2) - 1) * 10
+      (((((max - rate) / (max - min) * (-1)) + 1) * 2) - 1)
     })
 
   }
@@ -159,6 +144,22 @@ object TestPrediction {
       set(0) + " " + c.mkString(" ")
     }
     )
+  }
+  def prepareLearn(linesCsvOrdered:List[String]) = {
+    val lines17 = tail17(linesCsvOrdered)
+    val rates17 = lines17.map(set =>
+      set.map(line =>
+        (line.split(" ").apply(1)).toDouble
+      )
+    )
+    //    val rates17normal = rates17.map(normal(_))
+
+    val rates14learn = rates17.map(set => {
+      val last4 = normal(set).takeRight(2)
+      val teach = if ((last4(0) < last4(1))) 1 else 0
+      List(teach) ++ normal2(set.take(SIZE))
+    })
+    rates14learn
   }
 
 }
