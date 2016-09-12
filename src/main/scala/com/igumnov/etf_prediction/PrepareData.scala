@@ -21,7 +21,7 @@ object PrepareData {
   def main(args: Array[String]): Unit = {
     import scala.io.Source
 
-    val linesCsv = Source.fromFile("data/spy.csv").getLines()
+    val linesCsv = Source.fromFile("data/gld.csv").getLines()
     val linesCsvOrdered = linesCsv.toList.reverse
     val lines17 = tail17(linesCsvOrdered)
     val rates17 = lines17.map(set =>
@@ -32,28 +32,8 @@ object PrepareData {
     val rates17normal = rates17.map(normal(_))
 
     val rates14learn = rates17normal.map(set => {
-      val last4 = set.takeRight(3)
-      val teach = if (last4.head < last4.last) {
-        if (last4.head < last4.apply(1) &&
-          last4.apply(1) < last4.apply(2)) {
-          if ((last4.apply(2) - last4.head) > 0.5)
-            1
-          else 0
-        }
-        else 0
-      } else {
-        if (last4.head > last4.last) {
-          if (last4.head > last4.apply(1) &&
-            last4.apply(1) > last4.apply(2)) {
-            if ((last4.head - last4.apply(2)) > 0.5)
-              2
-            else 0
-          }
-          else 0
-        } else {
-          0
-        }
-      }
+      val last4 = set.takeRight(2)
+      val teach = if (last4.head < last4.last) 1 else 0
       List(teach) ++ set.take(5)
     })
 
@@ -83,10 +63,10 @@ object PrepareData {
   }
 
   def tail17(lines: List[String]): List[List[String]] = {
-    if (lines.size > 5 + 2)
-      List(lines.take(5 + 2)) ++ tail17(lines.tail)
+    if (lines.size > 5 + 1)
+      List(lines.take(5 + 1)) ++ tail17(lines.tail)
     else
-      List(lines.take(5 + 2))
+      List(lines.take(5 + 1))
   }
 
 }
