@@ -32,7 +32,7 @@ object PrepareData {
     val rates17normal = rates17.map(normal(_))
 
     val rates14learn = rates17normal.map(set => {
-      val last4 = normal(set.takeRight(3))
+      val last4 =  set.takeRight(3)
       val teach = if (last4.head < last4.last) {
         if (last4.head < last4.apply(1) &&
           last4.apply(1) < last4.apply(2)) 1
@@ -46,7 +46,7 @@ object PrepareData {
           0
         }
       }
-      List(teach) ++ set.take(5)
+      List(teach) ++   set.take(5)
     })
 
 
