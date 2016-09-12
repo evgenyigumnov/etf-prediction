@@ -33,7 +33,7 @@ import org.apache.spark.sql.SparkSession
   */
 object TestPrediction {
 
-  val SIZE = 3
+  val SIZE = 8
 
   def main(args: Array[String]): Unit = {
 
@@ -50,9 +50,8 @@ object TestPrediction {
     //    val rates17normal = rates17.map(normal(_))
 
     val rates14learn = rates17.map(set => {
-      val last4 = normal(set).takeRight(2)
-      val teach = if (last4.head < last4.last) {
-//        if ((last4.last - last4.head) > 0.5) 1 else 0
+      val last4 = normal(set).takeRight(3)
+      val teach = if ((last4(0) < last4(1)) && (last4(1) < last4(2))) {
         1
       }
       else 0
@@ -60,13 +59,13 @@ object TestPrediction {
     })
 
 
-//    val lines = prepareLines(rates14learn.dropRight(1000))
-    val lines = prepareLines(rates14learn.dropRight(100))
+    //    val lines = prepareLines(rates14learn.dropRight(1000))
+    val lines = prepareLines(rates14learn.dropRight(500))
 
     Files.write(Paths.get("data/spy.txt"), lines.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
 
     //    val lines2 = prepareLines(List(rates14learn.last))
-    val lines2 = prepareLines(rates14learn.takeRight(100))
+    val lines2 = prepareLines(rates14learn.takeRight(500))
 
     Files.write(Paths.get("data/spy1.txt"), lines2.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
 
@@ -84,13 +83,15 @@ object TestPrediction {
     val dataTest = spark.read.format("libsvm")
       .load("data/spy1.txt")
     // Split the data into train and test
-    //val splits = dataTrain.randomSplit(Array(0.90, 0.10), seed = 1234L)
-    val train = dataTrain
-    val test = dataTest
+    val splitsTrain = dataTrain.randomSplit(Array(0.99, 0.01), seed = 1234L)
+    val splitsTest = dataTrain.randomSplit(Array(0.99, 0.01), seed = 1234L)
+    val train = splitsTrain(0)
+    val test = splitsTest(0)
     // specify layers for the neural network:
     // input layer of size 4 (features), two intermediate of size 5 and 4
     // and output of size 3 (classes)
-    val layers = Array[Int](SIZE, SIZE+2,3, 2)
+    val layers = Array[Int](SIZE, SIZE+2 , 3, 2)
+    //val layers = Array[Int](SIZE, SIZE , 5, 2)
     // create the trainer and set its parameters
     val trainer = new MultilayerPerceptronClassifier()
       .setLayers(layers)
@@ -105,7 +106,9 @@ object TestPrediction {
       println("prediction:" + toStr(r.getAs("prediction")))
     }
     )
-    val predictionAndLabels = result.select("prediction", "label")
+    val predictionAndLabels = result.filter(r => {
+      r.getAs("prediction") == 1.0
+    }).select("prediction", "label")
     val evaluator = new MulticlassClassificationEvaluator()
       .setMetricName("accuracy")
     println("Accuracy: " + evaluator.evaluate(predictionAndLabels))
@@ -130,10 +133,10 @@ object TestPrediction {
   }
 
   def tail17(lines: List[String]): List[List[String]] = {
-    if (lines.size > SIZE + 1)
-      List(lines.take(SIZE + 1)) ++ tail17(lines.tail)
+    if (lines.size > SIZE + 2)
+      List(lines.take(SIZE + 2)) ++ tail17(lines.tail)
     else
-      List(lines.take(SIZE + 1))
+      List(lines.take(SIZE + 2))
   }
 
   def prepareLines(rates14learn: List[List[AnyVal]]) = {
