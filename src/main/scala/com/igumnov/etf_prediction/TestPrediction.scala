@@ -42,7 +42,7 @@ object TestPrediction {
     val data = spark.read.format("libsvm")
       .load("data/spy.txt")
     // Split the data into train and test
-    val splits = data.randomSplit(Array(0.99,0.01), seed = 1234L)
+    val splits = data.randomSplit(Array(0.9,0.1), seed = 1234L)
     val train = splits(0)
     val test = splits(1)
     // specify layers for the neural network:

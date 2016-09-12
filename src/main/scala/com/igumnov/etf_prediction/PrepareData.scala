@@ -32,29 +32,37 @@ object PrepareData {
     val rates17normal = rates17.map(normal(_))
 
     val rates14learn = rates17normal.map(set => {
-      val last4 =  set.takeRight(3)
+      val last4 = set.takeRight(3)
       val teach = if (last4.head < last4.last) {
         if (last4.head < last4.apply(1) &&
-          last4.apply(1) < last4.apply(2)) 1
+          last4.apply(1) < last4.apply(2)) {
+          if ((last4.apply(2) - last4.head) > 0.5)
+            1
+          else 0
+        }
         else 0
       } else {
         if (last4.head > last4.last) {
           if (last4.head > last4.apply(1) &&
-            last4.apply(1) > last4.apply(2) ) 2
+            last4.apply(1) > last4.apply(2)) {
+            if ((last4.head - last4.apply(2)) > 0.5)
+              2
+            else 0
+          }
           else 0
         } else {
           0
         }
       }
-      List(teach) ++   set.take(5)
+      List(teach) ++ set.take(5)
     })
 
 
     val lines = rates14learn.map(set => {
       val a = set.takeRight(5).map(":" + _)
       val b = a.zip((1 to 5).toList)
-      val c = b.map(x=> {
-         (x._2.toString)+x._1
+      val c = b.map(x => {
+        (x._2.toString) + x._1
       })
       set(0) + " " + c.mkString(" ")
     }
