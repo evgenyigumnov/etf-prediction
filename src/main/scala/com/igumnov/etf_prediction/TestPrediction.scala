@@ -50,7 +50,7 @@ object TestPrediction {
     //    val rates17normal = rates17.map(normal(_))
 
     val rates14learn = rates17.map(set => {
-      val last4 = normal(set).takeRight(3)
+      val last4 = normal(set).takeRight(2)
       val teach = if ((last4(0) < last4(1))) 1 else 0
       List(teach) ++ normal2(set.take(SIZE))
     })
@@ -68,6 +68,7 @@ object TestPrediction {
 
     Files.write(Paths.get("data/spy1.txt"), lines2.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
 
+    Files.write(Paths.get("data/spy2.txt"), lines17.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
 
 
     val spark = SparkSession
@@ -142,10 +143,10 @@ object TestPrediction {
   }
 
   def tail17(lines: List[String]): List[List[String]] = {
-    if (lines.size > SIZE + 2)
-      List(lines.take(SIZE + 2)) ++ tail17(lines.tail)
+    if (lines.size > SIZE + 1)
+      List(lines.take(SIZE + 1)) ++ tail17(lines.tail)
     else
-      List(lines.take(SIZE + 2))
+      List(lines.take(SIZE + 1))
   }
 
   def prepareLines(rates14learn: List[List[AnyVal]]) = {
