@@ -33,7 +33,7 @@ import org.apache.spark.sql.SparkSession
   */
 object TestPrediction {
 
-  val SIZE = 30
+  val SIZE = 4
 
   def main(args: Array[String]): Unit = {
 
@@ -41,10 +41,13 @@ object TestPrediction {
 
     val linesCsv = Source.fromFile("data/spy.csv").getLines()
     val linesCsvOrdered = linesCsv.toList.reverse
-
-    val TRAIN = 200
-    val rates14learn1 = prepareLearn(linesCsvOrdered.dropRight(TRAIN))
-    val rates14test1 = prepareLearn(linesCsvOrdered.takeRight(TRAIN))
+//
+//    val TRAIN = 1700
+//    val rates14learn1 = prepareLearn(linesCsvOrdered.dropRight(TRAIN))
+//    val rates14test1 = prepareLearn(linesCsvOrdered.takeRight(TRAIN))
+    val TRAIN = 1700
+    val rates14learn1 = prepareLearn(linesCsvOrdered.take(1500))
+    val rates14test1 = prepareLearn(linesCsvOrdered.takeRight(600))
 
     val lines = prepareLines(rates14learn1)
     val lines2 = prepareLines(rates14test1)
@@ -78,7 +81,8 @@ object TestPrediction {
     // specify layers for the neural network:
     // input layer of size 4 (features), two intermediate of size 5 and 4
     // and output of size 3 (classes)
-    val layers = Array[Int](SIZE, SIZE * 2, SIZE, 2)
+//    val layers = Array[Int](SIZE-1, SIZE*3 ,SIZE, 2)
+    val layers = Array[Int](SIZE-1, SIZE*8 ,SIZE, 2)
     // create the trainer and set its parameters
     val trainer = new MultilayerPerceptronClassifier()
       .setLayers(layers)
@@ -99,7 +103,7 @@ object TestPrediction {
       println(x._1 + " " + x._2)
     })
     val predictionAndLabels = result.filter(r => {
-      r.getAs("prediction") == 1.0
+      true //r.getAs("prediction") == 1.0
     }).select("prediction", "label")
     val evaluator = new MulticlassClassificationEvaluator()
       .setMetricName("accuracy")
@@ -157,14 +161,14 @@ object TestPrediction {
         (line.split(" ").apply(1)).toDouble
       )
     )
-    //    val rates17normal = rates17.map(normal(_))
 
     val rates14learn = rates17.map(set => {
       val last4 = normal(set).takeRight(2)
       val teach = if ((last4(0) < last4(1))) {
-        if ((last4(1) - last4(0)) > 0.2) 1 else 0
+        1
+//        if ((last4(1) - last4(0)) > 0.05) 1 else 0
       } else 0
-      List(teach) ++ normal(set.take(SIZE))
+      List(teach) ++ normal2(set.take(SIZE))
     })
     rates14learn
   }
