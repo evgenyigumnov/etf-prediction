@@ -33,7 +33,7 @@ import org.apache.spark.sql.SparkSession
   */
 object TestPrediction {
 
-  val SIZE = 3
+  val SIZE = 30
 
   def main(args: Array[String]): Unit = {
 
@@ -42,7 +42,7 @@ object TestPrediction {
     val linesCsv = Source.fromFile("data/spy.csv").getLines()
     val linesCsvOrdered = linesCsv.toList.reverse
 
-    val TRAIN = 50
+    val TRAIN = 200
     val rates14learn1 = prepareLearn(linesCsvOrdered.dropRight(TRAIN))
     val rates14test1 = prepareLearn(linesCsvOrdered.takeRight(TRAIN))
 
@@ -78,7 +78,7 @@ object TestPrediction {
     // specify layers for the neural network:
     // input layer of size 4 (features), two intermediate of size 5 and 4
     // and output of size 3 (classes)
-    val layers = Array[Int](SIZE-1, SIZE * 2, SIZE, 2)
+    val layers = Array[Int](SIZE, SIZE * 2, SIZE, 2)
     // create the trainer and set its parameters
     val trainer = new MultilayerPerceptronClassifier()
       .setLayers(layers)
@@ -99,7 +99,7 @@ object TestPrediction {
       println(x._1 + " " + x._2)
     })
     val predictionAndLabels = result.filter(r => {
-      true //r.getAs("prediction") == 0.0
+      r.getAs("prediction") == 1.0
     }).select("prediction", "label")
     val evaluator = new MulticlassClassificationEvaluator()
       .setMetricName("accuracy")
@@ -119,7 +119,7 @@ object TestPrediction {
     val min = set.min
     val middle = ((max - min) / 2.0) + min
     set.map(rate => {
-      (((((max - rate) / (max - min) * (-1)) + 1) * 2) - 1) * 10
+      (((((max - rate) / (max - min) * (-1)) + 1) * 2) - 1)
     })
 
   }
@@ -161,8 +161,10 @@ object TestPrediction {
 
     val rates14learn = rates17.map(set => {
       val last4 = normal(set).takeRight(2)
-      val teach = if ((last4(0) < last4(1))) 1 else 0
-      List(teach) ++ normal2(set.take(SIZE))
+      val teach = if ((last4(0) < last4(1))) {
+        if ((last4(1) - last4(0)) > 0.2) 1 else 0
+      } else 0
+      List(teach) ++ normal(set.take(SIZE))
     })
     rates14learn
   }
