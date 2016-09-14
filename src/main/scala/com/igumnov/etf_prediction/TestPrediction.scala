@@ -33,19 +33,17 @@ import org.apache.spark.sql.SparkSession
   */
 object TestPrediction {
 
-  val SIZE = 50
+  val SIZE = 4
+
   def main(args: Array[String]): Unit = {
 
     import scala.io.Source
 
     val linesCsv = Source.fromFile("data/spy.csv").getLines()
     val linesCsvOrdered = linesCsv.toList.reverse
-    //
-    //    val TRAIN = 1700
-    //    val rates14learn1 = prepareLearn(linesCsvOrdered.dropRight(TRAIN))
-    //    val rates14test1 = prepareLearn(linesCsvOrdered.takeRight(TRAIN))
-    val rates14learn1 = prepareLearn(linesCsvOrdered.take(2300))
-    val rates14test1 = prepareLearn(linesCsvOrdered.takeRight(200))
+
+    val rates14learn1 = prepareLearn(linesCsvOrdered.take(2400))
+    val rates14test1 = prepareLearnTest(linesCsvOrdered.takeRight(100))
 
     val lines = prepareLines(rates14learn1)
     val lines2 = prepareLines(rates14test1)
@@ -80,7 +78,7 @@ object TestPrediction {
     // input layer of size 4 (features), two intermediate of size 5 and 4
     // and output of size 3 (classes)
     //    val layers = Array[Int](SIZE-1, SIZE*3 ,SIZE, 2)
-    val layers = Array[Int](SIZE, SIZE * 8, SIZE, 2)
+    val layers = Array[Int](SIZE, SIZE * 8, SIZE, 3)
     // create the trainer and set its parameters
     val trainer = new MultilayerPerceptronClassifier()
       .setLayers(layers)
@@ -93,7 +91,6 @@ object TestPrediction {
     val result = model.transform(test)
     var resultStr: scala.collection.mutable.ListBuffer[String] = new scala.collection.mutable.ListBuffer[String]()
     result.collect().foreach(r => {
-//      println("prediction:" + toStr(r.getAs("prediction")))
       resultStr += toStr(r.getAs("prediction"))
     }
     )
@@ -101,7 +98,7 @@ object TestPrediction {
       println(x._1 + " " + x._2)
     })
     val predictionAndLabels = result.filter(r => {
-      true //r.getAs("prediction") == 1.0
+      (r.getAs("prediction") == 2.0) || (r.getAs("prediction") == 0.0)
     }).select("prediction", "label")
     val evaluator = new MulticlassClassificationEvaluator()
       .setMetricName("accuracy")
@@ -113,7 +110,7 @@ object TestPrediction {
 
 
   def toStr(in: Double) = {
-    if (in == 0.0) "Sell" else "Buy"
+    (in - 0).toString
   }
 
   def normal(set: List[Double]) = {
@@ -126,17 +123,29 @@ object TestPrediction {
 
   }
 
-//  def normal2(set: List[Double]) = {
-//    set.zip(set.tail).map(x => {
-//      if (x._1 > x._2) 1 else -1
-//    }).tail
-//  }
+
+  def normal3(set: List[Double]) = {
+    val startValue = set.head
+    val more = set.filter(_ < startValue).sortWith(_ < _)
+    val less = set.filter(_ > startValue).sortWith(_ > _)
+    set.map(x => {
+      if (x == startValue) 0
+      else {
+        if (x < startValue) {
+          more.indexOf(x) + 1
+        } else {
+          (less.indexOf(x) + 1) * -1
+        }
+      }
+    })
+  }
+
 
   def tail17(lines: List[String]): List[List[String]] = {
-    if (lines.size >= SIZE + 1)
-      List(lines.take(SIZE + 1)) ++ tail17(lines.tail)
+    if (lines.size >= SIZE + 4)
+      List(lines.take(SIZE + 4)) ++ tail17(lines.tail)
     else
-      List(lines.take(SIZE + 1))
+      List(lines.take(SIZE + 4))
   }
 
   def prepareLines(rates14learn: List[List[AnyVal]]) = {
@@ -161,11 +170,53 @@ object TestPrediction {
     )
 
     val rates14learn = rates17.map(set => {
-      val last4 = normal(set).take(SIZE + 1).takeRight(2)
-      val teach = if ((last4(0) < last4(1))) {
-        1
-      } else 0
-      List(teach) ++ normal(set.take(SIZE))
+
+
+      val last4 = set.takeRight(5)
+
+      var teach = 0
+      if ((last4.head < last4.tail(1)) &&
+        (last4.tail(0) < last4.tail(1))) {
+        teach = 1
+
+      } else {
+        if ((last4.head > last4.tail(1)) &&
+          (last4.tail(0) > last4.tail(1))) {
+          teach = -1
+        }
+      }
+      teach = teach + 1
+
+      List(teach) ++ normal3(set.take(SIZE))
+    })
+    rates14learn
+  }
+
+  def prepareLearnTest(linesCsvOrdered: List[String]) = {
+    val lines17 = tail17(linesCsvOrdered)
+    val rates17 = lines17.map(set =>
+      set.map(line =>
+        (line.split(" ").apply(1)).toDouble
+      )
+    )
+
+    val rates14learn = rates17.map(set => {
+
+
+      val last4 = set.takeRight(5)
+
+      var teach = 0
+      if ((last4.head < last4.tail(1)) ) {
+        teach = 1
+
+      } else {
+        if ((last4.head > last4.tail(1)) ) {
+          teach = -1
+        }
+      }
+      teach = teach + 1
+
+      List(teach) ++ normal3(set.take(SIZE))
     })
     rates14learn
   }
