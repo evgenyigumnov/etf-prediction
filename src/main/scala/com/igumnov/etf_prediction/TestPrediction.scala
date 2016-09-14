@@ -33,7 +33,7 @@ import org.apache.spark.sql.SparkSession
   */
 object TestPrediction {
 
-  val SIZE = 20
+  val SIZE = 50
   def main(args: Array[String]): Unit = {
 
     import scala.io.Source
@@ -44,9 +44,8 @@ object TestPrediction {
     //    val TRAIN = 1700
     //    val rates14learn1 = prepareLearn(linesCsvOrdered.dropRight(TRAIN))
     //    val rates14test1 = prepareLearn(linesCsvOrdered.takeRight(TRAIN))
-    val TRAIN = 1700
-    val rates14learn1 = prepareLearn(linesCsvOrdered.take(1500))
-    val rates14test1 = prepareLearn(linesCsvOrdered.takeRight(600))
+    val rates14learn1 = prepareLearn(linesCsvOrdered.take(2300))
+    val rates14test1 = prepareLearn(linesCsvOrdered.takeRight(200))
 
     val lines = prepareLines(rates14learn1)
     val lines2 = prepareLines(rates14test1)
@@ -57,7 +56,7 @@ object TestPrediction {
 
     Files.write(Paths.get("data/spy1.txt"), lines2.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
 
-    Files.write(Paths.get("data/spy2.txt"), tail17(linesCsvOrdered.takeRight(TRAIN)).flatMap(s => (s + "\n").getBytes("utf8")).toArray)
+    Files.write(Paths.get("data/spy2.txt"), tail17(linesCsvOrdered.takeRight(2300)).flatMap(s => (s + "\n").getBytes("utf8")).toArray)
 
 
 
@@ -81,7 +80,7 @@ object TestPrediction {
     // input layer of size 4 (features), two intermediate of size 5 and 4
     // and output of size 3 (classes)
     //    val layers = Array[Int](SIZE-1, SIZE*3 ,SIZE, 2)
-    val layers = Array[Int](SIZE-1, SIZE * 8, SIZE, 2)
+    val layers = Array[Int](SIZE, SIZE * 8, SIZE, 2)
     // create the trainer and set its parameters
     val trainer = new MultilayerPerceptronClassifier()
       .setLayers(layers)
@@ -127,11 +126,11 @@ object TestPrediction {
 
   }
 
-  def normal2(set: List[Double]) = {
-    set.zip(set.tail).map(x => {
-      if (x._1 > x._2) 1 else -1
-    }).tail
-  }
+//  def normal2(set: List[Double]) = {
+//    set.zip(set.tail).map(x => {
+//      if (x._1 > x._2) 1 else -1
+//    }).tail
+//  }
 
   def tail17(lines: List[String]): List[List[String]] = {
     if (lines.size >= SIZE + 2)
@@ -162,11 +161,11 @@ object TestPrediction {
     )
 
     val rates14learn = rates17.map(set => {
-      val last4 = normal(set).take(SIZE + 2).takeRight(2)
+      val last4 = normal(set).take(SIZE + 1).takeRight(2)
       val teach = if ((last4(0) < last4(1))) {
         1
       } else 0
-      List(teach) ++ normal2(set).take(SIZE-1)
+      List(teach) ++ normal(set.take(SIZE))
     })
     rates14learn
   }
