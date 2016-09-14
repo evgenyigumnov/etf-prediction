@@ -82,7 +82,7 @@ object TestPrediction {
     // input layer of size 4 (features), two intermediate of size 5 and 4
     // and output of size 3 (classes)
     //    val layers = Array[Int](SIZE-1, SIZE*3 ,SIZE, 2)
-    val layers = Array[Int](SIZE, SIZE * 8, SIZE, 2)
+    val layers = Array[Int](SIZE-1, SIZE * 8, SIZE, 2)
     // create the trainer and set its parameters
     val trainer = new MultilayerPerceptronClassifier()
       .setLayers(layers)
@@ -135,10 +135,10 @@ object TestPrediction {
   }
 
   def tail17(lines: List[String]): List[List[String]] = {
-    if (lines.size > SIZE + 3)
-      List(lines.take(SIZE + 3)) ++ tail17(lines.tail)
+    if (lines.size >= SIZE + 2)
+      List(lines.take(SIZE + 2)) ++ tail17(lines.tail)
     else
-      List(lines.take(SIZE + 3))
+      List(lines.take(SIZE + 2))
   }
 
   def prepareLines(rates14learn: List[List[AnyVal]]) = {
@@ -163,11 +163,11 @@ object TestPrediction {
     )
 
     val rates14learn = rates17.map(set => {
-      val last4 = normal(set).take(SIZE + 3).takeRight(2)
+      val last4 = normal(set).take(SIZE + 2).takeRight(2)
       val teach = if ((last4(0) < last4(1))) {
         1
       } else 0
-      List(teach) ++ normal2(set).take(SIZE)
+      List(teach) ++ normal2(set).take(SIZE-1)
     })
     rates14learn
   }
