@@ -163,7 +163,7 @@ object TestPrediction {
     )
 
     val rates14learn = rates17.map(set => {
-      val last4 = normal(set).takeRight(2)
+      val last4 = normal(set).take(SIZE+2).takeRight(2)
       val teach = if ((last4(0) < last4(1))) {
         1
 //        if ((last4(1) - last4(0)) > 0.05) 1 else 0
