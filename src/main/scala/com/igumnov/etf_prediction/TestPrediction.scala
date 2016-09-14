@@ -133,10 +133,10 @@ object TestPrediction {
 //  }
 
   def tail17(lines: List[String]): List[List[String]] = {
-    if (lines.size >= SIZE + 2)
-      List(lines.take(SIZE + 2)) ++ tail17(lines.tail)
+    if (lines.size >= SIZE + 1)
+      List(lines.take(SIZE + 1)) ++ tail17(lines.tail)
     else
-      List(lines.take(SIZE + 2))
+      List(lines.take(SIZE + 1))
   }
 
   def prepareLines(rates14learn: List[List[AnyVal]]) = {
