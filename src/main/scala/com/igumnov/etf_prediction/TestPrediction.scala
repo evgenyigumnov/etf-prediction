@@ -33,7 +33,7 @@ import org.apache.spark.sql.SparkSession
   */
 object TestPrediction {
 
-  val SIZE = 4
+  val SIZE = 10
 
   def main(args: Array[String]): Unit = {
 
@@ -82,7 +82,7 @@ object TestPrediction {
     // input layer of size 4 (features), two intermediate of size 5 and 4
     // and output of size 3 (classes)
 //    val layers = Array[Int](SIZE-1, SIZE*3 ,SIZE, 2)
-    val layers = Array[Int](SIZE-1, SIZE*8 ,SIZE, 2)
+    val layers = Array[Int](SIZE, SIZE*8 ,SIZE, 2)
     // create the trainer and set its parameters
     val trainer = new MultilayerPerceptronClassifier()
       .setLayers(layers)
@@ -99,7 +99,7 @@ object TestPrediction {
       resultStr += toStr(r.getAs("prediction"))
     }
     )
-    resultStr.reverse.zip(linesCsvOrdered.reverse.drop(2)).foreach(x => {
+    resultStr.reverse.zip(linesCsvOrdered.reverse.drop(1)).foreach(x => {
       println(x._1 + " " + x._2)
     })
     val predictionAndLabels = result.filter(r => {
@@ -129,16 +129,16 @@ object TestPrediction {
   }
 
   def normal2(set: List[Double]) = {
-    set.zip((Nil :+ 0.0) ++ set).map(x => {
+    set.zip(set.tail).map(x => {
       if (x._1 > x._2) 1 else -1
     }).tail
   }
 
   def tail17(lines: List[String]): List[List[String]] = {
-    if (lines.size > SIZE + 1)
-      List(lines.take(SIZE + 1)) ++ tail17(lines.tail)
+    if (lines.size > SIZE + 3)
+      List(lines.take(SIZE + 3)) ++ tail17(lines.tail)
     else
-      List(lines.take(SIZE + 1))
+      List(lines.take(SIZE + 3))
   }
 
   def prepareLines(rates14learn: List[List[AnyVal]]) = {
@@ -168,7 +168,7 @@ object TestPrediction {
         1
 //        if ((last4(1) - last4(0)) > 0.05) 1 else 0
       } else 0
-      List(teach) ++ normal2(set.take(SIZE))
+      List(teach) ++ normal2(set).take(SIZE)
     })
     rates14learn
   }
