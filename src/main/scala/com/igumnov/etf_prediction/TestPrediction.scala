@@ -33,8 +33,7 @@ import org.apache.spark.sql.SparkSession
   */
 object TestPrediction {
 
-  val SIZE = 5
-
+  val SIZE = 20
   def main(args: Array[String]): Unit = {
 
     import scala.io.Source
@@ -95,7 +94,7 @@ object TestPrediction {
     val result = model.transform(test)
     var resultStr: scala.collection.mutable.ListBuffer[String] = new scala.collection.mutable.ListBuffer[String]()
     result.collect().foreach(r => {
-      println("prediction:" + toStr(r.getAs("prediction")))
+//      println("prediction:" + toStr(r.getAs("prediction")))
       resultStr += toStr(r.getAs("prediction"))
     }
     )
