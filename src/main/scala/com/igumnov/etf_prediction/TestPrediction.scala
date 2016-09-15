@@ -45,11 +45,15 @@ object TestPrediction {
 
     val linesCsvVix = Source.fromFile("data/vix.csv").getLines()
     val linesCsvOrderedVix = linesCsvVix.toList.reverse
-    val vixLearn = prepareLearnVix(linesCsvOrderedVix.dropRight(300).take(2000))
-    val vixTest = prepareLearnVix(linesCsvOrderedVix.takeRight(100))
 
-    val rates14learn1 = prepareLearnTest(linesCsvOrdered.dropRight(300).take(2000))
-    val rates14test1 = prepareLearnTest(linesCsvOrdered.takeRight(100))
+    val TRAIN = 2000
+    val TEST = 50
+
+    val vixLearn = prepareLearnVix(linesCsvOrderedVix.dropRight(TEST).take(TRAIN))
+    val vixTest = prepareLearnVix(linesCsvOrderedVix.takeRight(TEST))
+
+    val rates14learn1 = prepareLearnTest(linesCsvOrdered.dropRight(TEST).take(TRAIN))
+    val rates14test1 = prepareLearnTest(linesCsvOrdered.takeRight(TEST))
 
     val lines = prepareLines(rates14learn1, vixLearn)
     val lines2 = prepareLines(rates14test1, vixTest)
