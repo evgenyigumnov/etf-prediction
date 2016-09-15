@@ -37,11 +37,11 @@ object TestPrediction {
 
   val SIZE = 4
   val SIZEVIX = 4
+  var balanceGlobal = 0.0
 
   def main2(args: Array[String]): Unit = {
 
     import scala.io.Source
-
     val linesCsv = Source.fromFile("data/spy.csv").getLines()
     val linesCsvOrdered = linesCsv.toList.reverse
 
@@ -53,10 +53,10 @@ object TestPrediction {
 
 
 
-    val vixLearn = prepareLearnVix(linesCsvOrderedVix.drop(TEST).take(TRAIN) )
+    val vixLearn = prepareLearnVix(linesCsvOrderedVix.drop(TEST).take(TRAIN))
     val vixTest = prepareLearnVix(linesCsvOrderedVix.take(TEST))
 
-    val rates14learn1 = prepareLearnTest(linesCsvOrdered.drop(TEST).take(TRAIN) )
+    val rates14learn1 = prepareLearnTest(linesCsvOrdered.drop(TEST).take(TRAIN))
     val rates14test1 = prepareLearnTest(linesCsvOrdered.take(TEST))
 
     val lines = prepareLines(rates14learn1, vixLearn)
@@ -149,7 +149,7 @@ object TestPrediction {
       resultStr += toStr(r.getAs("prediction"))
     }
     )
-    val lines=resultStr.reverse.zip(linesCsvOrdered.reverse.drop(1)).map(x => {
+    val lines = resultStr.reverse.zip(linesCsvOrdered.reverse.drop(1)).map(x => {
       println(x._1 + " " + x._2)
       (x._1 + " " + x._2)
     })
@@ -172,31 +172,12 @@ object TestPrediction {
     (in - 1).toString
   }
 
-  def normal(set: List[Double]) = {
-    val max = set.max
-    val min = set.min
-    val middle = ((max - min) / 2.0) + min
-    set.map(rate => {
-      (((((max - rate) / (max - min) * (-1)) + 1) * 2) - 1)
-    })
-
-  }
-
-
   def normal3(set: List[Double]) = {
-    val startValue = set.head
-    val more = set.filter(_ < startValue).sortWith(_ < _)
-    val less = set.filter(_ > startValue).sortWith(_ > _)
-    set.map(x => {
-      if (x == startValue) 0
-      else {
-        if (x < startValue) {
-          more.indexOf(x) + 1
-        } else {
-          (less.indexOf(x) + 1) * -1
-        }
-      }
+    val begin = set.head
+    set.map(rate => {
+      begin - rate
     })
+
   }
 
 
@@ -254,7 +235,7 @@ object TestPrediction {
         teach = 1
 
       } else {
-        if ((last4.head > last4.tail(0)) ) {
+        if ((last4.head > last4.tail(0))) {
           teach = -1
         }
       }
@@ -279,11 +260,11 @@ object TestPrediction {
       val last4 = set.takeRight(5)
 
       var teach = 0
-      if ((last4.head < last4.tail(0)) ) {
+      if ((last4.head < last4.tail(0))) {
         teach = 1
 
       } else {
-        if ((last4.head > last4.tail(0)) ) {
+        if ((last4.head > last4.tail(0))) {
           teach = -1
         }
       }
@@ -294,7 +275,7 @@ object TestPrediction {
     rates14learn
   }
 
-  def calcProfit() ={
+  def calcProfit() = {
     var balance = 0.0
     val linesCsv = Source.fromFile("data/out.csv").getLines()
     val linesCsvOrdered = linesCsv.toList.reverse
@@ -312,18 +293,18 @@ object TestPrediction {
         val price2 = line(2)._1.toDouble
         val what = line(0)._2
         if (what == "-1.0") {
-          if (price0 > price1) {
-            balance = balance + price0 - price1
-          } else {
-            balance = balance  - 1
-          }
+          //          if (price0 > price1) {
+          balance = balance + price0 - price1
+          //          } else {
+          //            balance = balance  - 1
+          //          }
         } else {
           if (what == "1.0") {
-            if (price0 < price1) {
-              balance = balance + price1 - price0
-            } else {
-              balance = balance  - 1
-            }
+            //            if (price0 < price1) {
+            balance = balance + price1 - price0
+            //            } else {
+            //              balance = balance  - 1
+            //            }
           }
         }
         //println("Accuracy balance: "+balance)
@@ -331,7 +312,9 @@ object TestPrediction {
 
       }
     })
-    println("Accuracy balance: "+balance)
+    balanceGlobal = balanceGlobal + balance
+    println("Accuracy balance: " + balance)
+    println("Accuracy global balance: " + balanceGlobal)
 
   }
 
