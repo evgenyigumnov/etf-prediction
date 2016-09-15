@@ -46,18 +46,53 @@ object TestPrediction {
     val linesCsvVix = Source.fromFile("data/vix.csv").getLines()
     val linesCsvOrderedVix = linesCsvVix.toList.reverse
 
-    val TRAIN = 50
+    val TRAIN = 200
+    val TEST = 50
+
+
+
+    val vixLearn = prepareLearnVix(linesCsvOrderedVix.drop(TEST).take(TRAIN) )
+    val vixTest = prepareLearnVix(linesCsvOrderedVix.take(TEST))
+
+    val rates14learn1 = prepareLearnTest(linesCsvOrdered.drop(TEST).take(TRAIN) )
+    val rates14test1 = prepareLearnTest(linesCsvOrdered.take(TEST))
+
+    val lines = prepareLines(rates14learn1, vixLearn)
+    val lines2 = prepareLines(rates14test1, vixTest)
+
+
+    Files.write(Paths.get("data/spy.txt"), lines.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
+
+
+    Files.write(Paths.get("data/spy1.txt"), lines2.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
+
+    iter(linesCsvOrdered.take(TEST))
+
+
+  }
+
+  def main2(args: Array[String]): Unit = {
+
+    import scala.io.Source
+
+    val linesCsv = Source.fromFile("data/spy.csv").getLines()
+    val linesCsvOrdered = linesCsv.toList.reverse
+
+    val linesCsvVix = Source.fromFile("data/vix.csv").getLines()
+    val linesCsvOrderedVix = linesCsvVix.toList.reverse
+
+    val TRAIN = 200
     val TEST = 50
 
     for (i <- 0 until 1000) {
       import scala.io.Source
 
 
-      val vixLearn = prepareLearnVix(linesCsvOrderedVix.dropRight(i*25).dropRight(TEST).takeRight(TRAIN))
-      val vixTest = prepareLearnVix(linesCsvOrderedVix.dropRight(i*25).takeRight(TEST))
+      val vixLearn = prepareLearnVix(linesCsvOrderedVix.drop(i * 25).drop(TEST).take(TRAIN))
+      val vixTest = prepareLearnVix(linesCsvOrderedVix.drop(i * 25).take(TEST))
 
-      val rates14learn1 = prepareLearnTest(linesCsvOrdered.dropRight(i*25).dropRight(TEST).takeRight(TRAIN))
-      val rates14test1 = prepareLearnTest(linesCsvOrdered.dropRight(i*25).takeRight(TEST))
+      val rates14learn1 = prepareLearnTest(linesCsvOrdered.drop(i * 25).drop(TEST).take(TRAIN))
+      val rates14test1 = prepareLearnTest(linesCsvOrdered.drop(i * 25).take(TEST))
 
       val lines = prepareLines(rates14learn1, vixLearn)
       val lines2 = prepareLines(rates14test1, vixTest)
@@ -68,7 +103,7 @@ object TestPrediction {
 
       Files.write(Paths.get("data/spy1.txt"), lines2.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
 
-      iter(linesCsvOrdered)
+      iter(linesCsvOrdered.drop(i * 25).take(TEST))
 
     }
 
@@ -128,7 +163,7 @@ object TestPrediction {
 
 
   def toStr(in: Double) = {
-    (in - 0).toString
+    (in - 1).toString
   }
 
   def normal(set: List[Double]) = {
