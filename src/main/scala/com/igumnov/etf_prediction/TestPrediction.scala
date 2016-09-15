@@ -35,8 +35,8 @@ import org.apache.spark.sql.SparkSession
   */
 object TestPrediction {
 
-  val SIZE = 4
-  val SIZEVIX = 4
+  val SIZE = 3
+  val SIZEVIX = 3
   var balanceGlobal = 0.0
 
   def main2(args: Array[String]): Unit = {
@@ -68,7 +68,7 @@ object TestPrediction {
 
     Files.write(Paths.get("data/spy1.txt"), lines2.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
 
-    iter(linesCsvOrdered.take(TEST))
+    iter(linesCsvOrdered.take(TEST), linesCsvOrderedVix.take(TEST))
 
 
   }
@@ -105,13 +105,13 @@ object TestPrediction {
 
       Files.write(Paths.get("data/spy1.txt"), lines2.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
 
-      iter(linesCsvOrdered.drop(i * 25).take(TEST))
+      iter(linesCsvOrdered.drop(i * 25).take(TEST), linesCsvOrderedVix.drop(i * 25).take(TEST))
 
     }
 
   }
 
-  def iter(linesCsvOrdered: List[String]) = {
+  def iter(linesCsvOrdered: List[String], linesCsvOrderedVix: List[String]) = {
 
     val spark = SparkSession
       .builder
@@ -149,10 +149,13 @@ object TestPrediction {
       resultStr += toStr(r.getAs("prediction"))
     }
     )
-    val lines = resultStr.reverse.zip(linesCsvOrdered.reverse.drop(1)).map(x => {
-      println(x._1 + " " + x._2)
-      (x._1 + " " + x._2)
-    })
+    val lines = (resultStr.reverse, linesCsvOrdered.reverse.drop(1), linesCsvOrderedVix.reverse.drop(1)).zipped.toList
+      .map(x => {
+        val x3 = x._3.split(" ").dropRight(1).takeRight(1).mkString(" ")
+        val ret = x._1 + " " + x._2 + " " + x3
+        println(ret)
+        ret
+      })
 
     Files.write(Paths.get("data/out.csv"), lines.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
     calcProfit()
@@ -188,21 +191,6 @@ object TestPrediction {
       List(lines.take(SIZE + 4))
   }
 
-  def prepareLines(rates14learn: List[List[AnyVal]], vixlearn: List[List[AnyVal]]) = {
-    val zip = rates14learn.zip(vixlearn)
-    zip.map(zzz => {
-      val set = zzz._1 ++ normal3(zzz._2.take(SIZEVIX).asInstanceOf[List[Double]])
-      //val set = zzz._1 ++ zzz._2.take(SIZE).asInstanceOf[List[Double]]
-      val a = set.tail.map(":" + _)
-      val b = a.zip((1 to SIZE + SIZEVIX).toList)
-      val c = b.map(x => {
-        (x._2.toString) + x._1
-      })
-      set(0) + " " + c.mkString(" ")
-    }
-    )
-  }
-
 
   def prepareLearnVix(linesCsvOrdered: List[String]) = {
     val lines17 = tail17(linesCsvOrdered)
@@ -217,34 +205,21 @@ object TestPrediction {
     rates14learn
   }
 
-  def prepareLearn(linesCsvOrdered: List[String]) = {
-    val lines17 = tail17(linesCsvOrdered)
-    val rates17 = lines17.map(set =>
-      set.map(line =>
-        (line.split(" ").apply(1)).toDouble
-      )
+
+  def prepareLines(rates14learn: List[List[AnyVal]], vixlearn: List[List[AnyVal]]) = {
+    val zip = rates14learn.zip(vixlearn)
+    zip.map(zzz => {
+      val set = zzz._1 ++ normal3(zzz._2.take(SIZEVIX).asInstanceOf[List[Double]])
+      val a = set.tail.map(":" + _)
+      val b = a.zip((1 to SIZE + SIZEVIX).toList)
+      val c = b.map(x => {
+        (x._2.toString) + x._1
+      })
+      set(0) + " " + c.mkString(" ")
+    }
     )
-
-    val rates14learn = rates17.map(set => {
-
-
-      val last4 = set.takeRight(5)
-
-      var teach = 0
-      if ((last4.head < last4.tail(0))) {
-        teach = 1
-
-      } else {
-        if ((last4.head > last4.tail(0))) {
-          teach = -1
-        }
-      }
-      teach = teach + 1
-
-      List(teach) ++ normal3(set.take(SIZE))
-    })
-    rates14learn
   }
+
 
   def prepareLearnTest(linesCsvOrdered: List[String]) = {
     val lines17 = tail17(linesCsvOrdered)
@@ -284,36 +259,29 @@ object TestPrediction {
       set.map(line => {
         val price = line.split(" ").apply(0)
         val what = line.split(" ").apply(2)
-        (what, price)
+        val vix = line.split(" ").apply(3)
+        (what, price, vix)
       })
     }).foreach(line => {
       if (line.size == 3) {
         val price0 = line(0)._1.toDouble
         val price1 = line(1)._1.toDouble
-        val price2 = line(2)._1.toDouble
         val what = line(0)._2
-        if (what == "-1.0") {
-          //          if (price0 > price1) {
+        val vix = line(0)._3.toDouble
+        if (what == "-1.0" && (vix > 30.0)) {
           balance = balance + price0 - price1
-          //          } else {
-          //            balance = balance  - 1
-          //          }
         } else {
-          if (what == "1.0") {
-            //            if (price0 < price1) {
+          if (what == "1.0" && (vix < 12.0)) {
             balance = balance + price1 - price0
-            //            } else {
-            //              balance = balance  - 1
-            //            }
           }
         }
-        //println("Accuracy balance: "+balance)
+        println("Accuracy balance: "+balance)
 
 
       }
     })
     balanceGlobal = balanceGlobal + balance
-    println("Accuracy balance: " + balance)
+//    println("Accuracy balance: " + balance)
     println("Accuracy global balance: " + balanceGlobal)
 
   }
