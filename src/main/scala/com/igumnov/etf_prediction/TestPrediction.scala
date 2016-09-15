@@ -315,14 +315,14 @@ object TestPrediction {
           if (price0 > price1) {
             balance = balance + price0 - price1
           } else {
-            balance = balance  - 0.5
+            balance = balance  - 1
           }
         } else {
           if (what == "1.0") {
             if (price0 < price1) {
               balance = balance + price1 - price0
             } else {
-              balance = balance  - 0.5
+              balance = balance  - 1
             }
           }
         }
