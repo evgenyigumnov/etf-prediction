@@ -268,20 +268,19 @@ object TestPrediction {
         val price1 = line(1)._1.toDouble
         val what = line(0)._2
         val vix = line(0)._3.toDouble
-        if (what == "-1.0" && (vix > 30.0)) {
-          balance = balance + price0 - price1
-        } else {
-          if (what == "1.0" && (vix < 12.0)) {
-            balance = balance + price1 - price0
-          }
+//        if (what == "-1.0" && (vix > 30.0)) {
+//          balance = balance + price0 - price1
+//        }
+        if (what == "1.0" && (vix < 10.0)) {
+          balance = balance + price1 - price0
         }
-        println("Accuracy balance: "+balance)
+        println("Accuracy balance: " + balance)
 
 
       }
     })
     balanceGlobal = balanceGlobal + balance
-//    println("Accuracy balance: " + balance)
+    //    println("Accuracy balance: " + balance)
     println("Accuracy global balance: " + balanceGlobal)
 
   }
