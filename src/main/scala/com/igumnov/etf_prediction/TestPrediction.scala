@@ -315,17 +315,19 @@ object TestPrediction {
           if (price0 > price1) {
             balance = balance + price0 - price1
           } else {
-            balance = balance + price0 - price2
+            balance = balance  - 0.5
           }
         } else {
           if (what == "1.0") {
             if (price0 < price1) {
               balance = balance + price1 - price0
             } else {
-              balance = balance + price2 - price0
+              balance = balance  - 0.5
             }
           }
         }
+        //println("Accuracy balance: "+balance)
+
 
       }
     })
