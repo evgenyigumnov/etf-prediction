@@ -25,6 +25,8 @@ import java.nio.file.{Paths, Files}
 import org.apache.spark.ml.classification.MultilayerPerceptronClassifier
 import org.apache.spark.ml.evaluation.MulticlassClassificationEvaluator
 
+import scala.io.Source
+
 // $example off$
 import org.apache.spark.sql.SparkSession
 
@@ -35,6 +37,7 @@ object TestPrediction {
 
   val SIZE = 3
   val SIZEVIX = 3
+  val balance=0.0
 
   def main2(args: Array[String]): Unit = {
 
@@ -147,9 +150,13 @@ object TestPrediction {
       resultStr += toStr(r.getAs("prediction"))
     }
     )
-    resultStr.reverse.zip(linesCsvOrdered.reverse.drop(1)).foreach(x => {
+    val lines=resultStr.reverse.zip(linesCsvOrdered.reverse.drop(1)).map(x => {
       println(x._1 + " " + x._2)
+      (x._1 + " " + x._2)
     })
+
+    Files.write(Paths.get("data/out.csv"), lines.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
+    calcProfit()
     val predictionAndLabels = result.filter(r => {
       (r.getAs("prediction") == 2.0) || (r.getAs("prediction") == 0.0)
     }).select("prediction", "label")
@@ -244,12 +251,12 @@ object TestPrediction {
       val last4 = set.takeRight(5)
 
       var teach = 0
-      if ((last4.head < last4.tail(1)) &&
+      if ((last4.head < last4.tail(0)) &&
         (last4.tail(0) < last4.tail(1))) {
         teach = 1
 
       } else {
-        if ((last4.head > last4.tail(1)) &&
+        if ((last4.head > last4.tail(0)) &&
           (last4.tail(0) > last4.tail(1))) {
           teach = -1
         }
@@ -290,6 +297,52 @@ object TestPrediction {
       List(teach) ++ normal3(set.take(SIZE))
     })
     rates14learn
+  }
+
+  def calcProfit() ={
+    var balance = 0.0
+    val linesCsv = Source.fromFile("data/out.csv").getLines()
+    val linesCsvOrdered = linesCsv.toList.reverse
+    val tailLine = tailbalance(linesCsvOrdered)
+    tailLine.map(set => {
+      set.map(line => {
+        val price = line.split(" ").apply(0)
+        val what = line.split(" ").apply(2)
+        (what, price)
+      })
+    }).foreach(line => {
+      if (line.size == 3) {
+        val price0 = line(0)._1.toDouble
+        val price1 = line(1)._1.toDouble
+        val price2 = line(2)._1.toDouble
+        val what = line(0)._2
+        if (what == "-1.0") {
+          if (price0 > price1) {
+            balance = balance + price0 - price1
+          } else {
+            balance = balance + price0 - price2
+          }
+        } else {
+          if (what == "1.0") {
+            if (price0 < price1) {
+              balance = balance + price1 - price0
+            } else {
+              balance = balance + price2 - price0
+            }
+          }
+        }
+
+      }
+    })
+    println("Accuracy balance: "+balance)
+
+  }
+
+  def tailbalance(lines: List[String]): List[List[String]] = {
+    if (lines.size >= 3)
+      List(lines.take(3)) ++ tailbalance(lines.tail)
+    else
+      List(lines.take(3))
   }
 
 }
