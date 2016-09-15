@@ -49,15 +49,15 @@ object TestPrediction {
     val TRAIN = 50
     val TEST = 50
 
-    for (i <- 0 until 100) {
+    for (i <- 0 until 1000) {
       import scala.io.Source
 
 
       val vixLearn = prepareLearnVix(linesCsvOrderedVix.dropRight(i*25).dropRight(TEST).takeRight(TRAIN))
       val vixTest = prepareLearnVix(linesCsvOrderedVix.dropRight(i*25).takeRight(TEST))
 
-      val rates14learn1 = prepareLearnTest(linesCsvOrdered.dropRight(TEST).takeRight(TRAIN))
-      val rates14test1 = prepareLearnTest(linesCsvOrdered.takeRight(TEST))
+      val rates14learn1 = prepareLearnTest(linesCsvOrdered.dropRight(i*25).dropRight(TEST).takeRight(TRAIN))
+      val rates14test1 = prepareLearnTest(linesCsvOrdered.dropRight(i*25).takeRight(TEST))
 
       val lines = prepareLines(rates14learn1, vixLearn)
       val lines2 = prepareLines(rates14test1, vixTest)
