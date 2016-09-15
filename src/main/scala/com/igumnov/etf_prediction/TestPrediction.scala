@@ -47,7 +47,7 @@ object TestPrediction {
     val linesCsvOrderedVix = linesCsvVix.toList.reverse
 
     val TRAIN = 2000
-    val TEST = 50
+    val TEST = 300
 
     val vixLearn = prepareLearnVix(linesCsvOrderedVix.dropRight(TEST).take(TRAIN))
     val vixTest = prepareLearnVix(linesCsvOrderedVix.takeRight(TEST))
