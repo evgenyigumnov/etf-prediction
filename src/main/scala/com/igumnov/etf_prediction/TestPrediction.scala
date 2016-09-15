@@ -33,7 +33,8 @@ import org.apache.spark.sql.SparkSession
   */
 object TestPrediction {
 
-  val SIZE = 4
+  val SIZE = 3
+  val SIZEVIX = 3
 
   def main(args: Array[String]): Unit = {
 
@@ -42,11 +43,16 @@ object TestPrediction {
     val linesCsv = Source.fromFile("data/spy.csv").getLines()
     val linesCsvOrdered = linesCsv.toList.reverse
 
-    val rates14learn1 = prepareLearn(linesCsvOrdered.take(2400))
+    val linesCsvVix = Source.fromFile("data/vix.csv").getLines()
+    val linesCsvOrderedVix = linesCsvVix.toList.reverse
+    val vixLearn = prepareLearnVix(linesCsvOrderedVix.dropRight(300).take(2000))
+    val vixTest = prepareLearnVix(linesCsvOrderedVix.takeRight(100))
+
+    val rates14learn1 = prepareLearnTest(linesCsvOrdered.dropRight(300).take(2000))
     val rates14test1 = prepareLearnTest(linesCsvOrdered.takeRight(100))
 
-    val lines = prepareLines(rates14learn1)
-    val lines2 = prepareLines(rates14test1)
+    val lines = prepareLines(rates14learn1, vixLearn)
+    val lines2 = prepareLines(rates14test1, vixTest)
 
 
     Files.write(Paths.get("data/spy.txt"), lines.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
@@ -54,7 +60,7 @@ object TestPrediction {
 
     Files.write(Paths.get("data/spy1.txt"), lines2.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
 
-    Files.write(Paths.get("data/spy2.txt"), tail17(linesCsvOrdered.takeRight(2300)).flatMap(s => (s + "\n").getBytes("utf8")).toArray)
+//    Files.write(Paths.get("data/spy2.txt"), tail17(linesCsvOrdered.takeRight(2000)).flatMap(s => (s + "\n").getBytes("utf8")).toArray)
 
 
 
@@ -78,7 +84,7 @@ object TestPrediction {
     // input layer of size 4 (features), two intermediate of size 5 and 4
     // and output of size 3 (classes)
     //    val layers = Array[Int](SIZE-1, SIZE*3 ,SIZE, 2)
-    val layers = Array[Int](SIZE, SIZE * 8, SIZE, 3)
+    val layers = Array[Int](SIZE+SIZEVIX, (SIZE+SIZEVIX) * 8, SIZE, 3)
     // create the trainer and set its parameters
     val trainer = new MultilayerPerceptronClassifier()
       .setLayers(layers)
@@ -148,17 +154,33 @@ object TestPrediction {
       List(lines.take(SIZE + 4))
   }
 
-  def prepareLines(rates14learn: List[List[AnyVal]]) = {
-    rates14learn.map(set => {
-      //println(set)
+  def prepareLines(rates14learn: List[List[AnyVal]], vixlearn: List[List[AnyVal]]) = {
+    val zip = rates14learn.zip(vixlearn)
+    zip.map(zzz => {
+      val set = zzz._1 ++ normal3(zzz._2.take(SIZEVIX).asInstanceOf[List[Double]])
+      //val set = zzz._1 ++ zzz._2.take(SIZE).asInstanceOf[List[Double]]
       val a = set.tail.map(":" + _)
-      val b = a.zip((1 to SIZE).toList)
+      val b = a.zip((1 to SIZE+SIZEVIX).toList)
       val c = b.map(x => {
         (x._2.toString) + x._1
       })
       set(0) + " " + c.mkString(" ")
     }
     )
+  }
+
+
+  def prepareLearnVix(linesCsvOrdered: List[String]) = {
+    val lines17 = tail17(linesCsvOrdered)
+    val rates17 = lines17.map(set =>
+      set.map(line =>
+        (line.split(" ").takeRight(2).take(1)).apply(0).toDouble
+      )
+    )
+    val rates14learn = rates17.map(set => {
+      set.take(SIZE)
+    })
+    rates14learn
   }
 
   def prepareLearn(linesCsvOrdered: List[String]) = {
@@ -206,11 +228,13 @@ object TestPrediction {
       val last4 = set.takeRight(5)
 
       var teach = 0
-      if ((last4.head < last4.tail(1)) ) {
+      if ((last4.head < last4.tail(0)) ||
+        (last4.head < last4.tail(1))) {
         teach = 1
 
       } else {
-        if ((last4.head > last4.tail(1)) ) {
+        if ((last4.head > last4.tail(0)) ||
+          (last4.head > last4.tail(1))) {
           teach = -1
         }
       }
