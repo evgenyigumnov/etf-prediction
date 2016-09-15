@@ -35,7 +35,7 @@ import org.apache.spark.sql.SparkSession
   */
 object TestPrediction {
 
-  val SIZE = 2
+  val SIZE = 3
   val SIZEVIX = 3
 
   def main2(args: Array[String]): Unit = {
