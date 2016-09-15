@@ -46,27 +46,35 @@ object TestPrediction {
     val linesCsvVix = Source.fromFile("data/vix.csv").getLines()
     val linesCsvOrderedVix = linesCsvVix.toList.reverse
 
-    val TRAIN = 300
-    val TEST = 100
+    val TRAIN = 50
+    val TEST = 50
 
-    val vixLearn = prepareLearnVix(linesCsvOrderedVix.dropRight(TEST).takeRight(TRAIN))
-    val vixTest = prepareLearnVix(linesCsvOrderedVix.takeRight(TEST))
-
-    val rates14learn1 = prepareLearnTest(linesCsvOrdered.dropRight(TEST).takeRight(TRAIN))
-    val rates14test1 = prepareLearnTest(linesCsvOrdered.takeRight(TEST))
-
-    val lines = prepareLines(rates14learn1, vixLearn)
-    val lines2 = prepareLines(rates14test1, vixTest)
+    for (i <- 0 until 100) {
+      import scala.io.Source
 
 
-    Files.write(Paths.get("data/spy.txt"), lines.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
+      val vixLearn = prepareLearnVix(linesCsvOrderedVix.dropRight(i*25).dropRight(TEST).takeRight(TRAIN))
+      val vixTest = prepareLearnVix(linesCsvOrderedVix.dropRight(i*25).takeRight(TEST))
+
+      val rates14learn1 = prepareLearnTest(linesCsvOrdered.dropRight(TEST).takeRight(TRAIN))
+      val rates14test1 = prepareLearnTest(linesCsvOrdered.takeRight(TEST))
+
+      val lines = prepareLines(rates14learn1, vixLearn)
+      val lines2 = prepareLines(rates14test1, vixTest)
 
 
-    Files.write(Paths.get("data/spy1.txt"), lines2.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
-
-//    Files.write(Paths.get("data/spy2.txt"), tail17(linesCsvOrdered.takeRight(2000)).flatMap(s => (s + "\n").getBytes("utf8")).toArray)
+      Files.write(Paths.get("data/spy.txt"), lines.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
 
 
+      Files.write(Paths.get("data/spy1.txt"), lines2.flatMap(s => (s + "\n").getBytes("utf8")).toArray)
+
+      iter(linesCsvOrdered)
+
+    }
+
+  }
+
+  def iter(linesCsvOrdered: List[String]) = {
 
     val spark = SparkSession
       .builder
@@ -88,7 +96,7 @@ object TestPrediction {
     // input layer of size 4 (features), two intermediate of size 5 and 4
     // and output of size 3 (classes)
     //    val layers = Array[Int](SIZE-1, SIZE*3 ,SIZE, 2)
-    val layers = Array[Int](SIZE+SIZEVIX, (SIZE+SIZEVIX) * 8, SIZE, 3)
+    val layers = Array[Int](SIZE + SIZEVIX, (SIZE + SIZEVIX) * 8, SIZE, 3)
     // create the trainer and set its parameters
     val trainer = new MultilayerPerceptronClassifier()
       .setLayers(layers)
@@ -164,7 +172,7 @@ object TestPrediction {
       val set = zzz._1 ++ normal3(zzz._2.take(SIZEVIX).asInstanceOf[List[Double]])
       //val set = zzz._1 ++ zzz._2.take(SIZE).asInstanceOf[List[Double]]
       val a = set.tail.map(":" + _)
-      val b = a.zip((1 to SIZE+SIZEVIX).toList)
+      val b = a.zip((1 to SIZE + SIZEVIX).toList)
       val c = b.map(x => {
         (x._2.toString) + x._1
       })
