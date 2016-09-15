@@ -35,9 +35,8 @@ import org.apache.spark.sql.SparkSession
   */
 object TestPrediction {
 
-  val SIZE = 3
+  val SIZE = 2
   val SIZEVIX = 3
-  val balance=0.0
 
   def main2(args: Array[String]): Unit = {
 
@@ -232,7 +231,7 @@ object TestPrediction {
       )
     )
     val rates14learn = rates17.map(set => {
-      set.take(SIZE)
+      set.take(SIZEVIX)
     })
     rates14learn
   }
@@ -251,13 +250,11 @@ object TestPrediction {
       val last4 = set.takeRight(5)
 
       var teach = 0
-      if ((last4.head < last4.tail(0)) &&
-        (last4.tail(0) < last4.tail(1))) {
+      if ((last4.head < last4.tail(0))) {
         teach = 1
 
       } else {
-        if ((last4.head > last4.tail(0)) &&
-          (last4.tail(0) > last4.tail(1))) {
+        if ((last4.head > last4.tail(0)) ) {
           teach = -1
         }
       }
@@ -282,13 +279,11 @@ object TestPrediction {
       val last4 = set.takeRight(5)
 
       var teach = 0
-      if ((last4.head < last4.tail(0)) ||
-        (last4.head < last4.tail(1))) {
+      if ((last4.head < last4.tail(0)) ) {
         teach = 1
 
       } else {
-        if ((last4.head > last4.tail(0)) ||
-          (last4.head > last4.tail(1))) {
+        if ((last4.head > last4.tail(0)) ) {
           teach = -1
         }
       }
