@@ -36,7 +36,7 @@ object TestPrediction {
   val SIZE = 3
   val SIZEVIX = 3
 
-  def main(args: Array[String]): Unit = {
+  def main2(args: Array[String]): Unit = {
 
     import scala.io.Source
 
@@ -71,7 +71,7 @@ object TestPrediction {
 
   }
 
-  def main2(args: Array[String]): Unit = {
+  def main(args: Array[String]): Unit = {
 
     import scala.io.Source
 
